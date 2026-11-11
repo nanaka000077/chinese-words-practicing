@@ -180,7 +180,8 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
 window.db = db;
-    window.testFirebase = async function() {
+
+window.testFirebase = async function() {
   await setDoc(
     doc(db, "words", "shared"),
     {
@@ -190,7 +191,6 @@ window.db = db;
 
   alert("Firebase保存成功！");
 };
-    
 </script>
 
 </head>
