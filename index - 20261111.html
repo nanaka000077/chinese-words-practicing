@@ -159,7 +159,11 @@ transform:translateX(60px);
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import {
+  getFirestore,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCOyehx7qoaXwy2E7wyh0To1XcXP1NeewU",
@@ -176,6 +180,17 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
 window.db = db;
+    window.testFirebase = async function() {
+  await setDoc(
+    doc(db, "words", "shared"),
+    {
+      test: "success"
+    }
+  );
+
+  alert("Firebase保存成功！");
+};
+    
 </script>
 
 </head>
