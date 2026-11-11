@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+
+
+</script>
+
+<head>
+<meta charset="UTF-8">
+<title>HSK Dash</title>
+
+<style>
+body{
+    font-family:sans-serif;
+    text-align:center;
+    margin-top:40px;
+}
+
+
+
+#word{
+    font-size:60px;
+    color:black;
+    margin:30px;
+}
+
+input{
+    padding:10px;
+    font-size:18px;
+    margin:5px;
+}
+
+button{
+    padding:10px;
+}
+
+
+
+#meaningBox{
+    margin-top:20px;
+    font-size:24px;
+    color:red;
+}
+
+.pop{
+    animation: pop 0.2s;
+}
+
+@keyframes pop{
+    0%{
+        transform:scale(1);
+    }
+
+    25%{
+        transform:scale(1.1);
+    }
+    
+    50%{
+        transform:scale(1.3);
+    }
+    
+    75%{
+        transform:scale(1.6);
+    }
+
+
+
+    100%{
+        transform:scale(1);
+    }
+}
+
+.shake{
+    animation: shake 0.12s;
+}
+
+@keyframes shake{
+    0%{
+        transform:translateX(0);
+    }
+
+    25%{
+        transform:translateX(-4px);
+    }
+
+    50%{
+        transform:translateX(4px);
+    }
+
+    75%{
+        transform:translateX(-2px);
+    }
+
+    100%{
+        transform:translateX(0);
+    }
+    }
+ 
+#resultArea{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+}
+
+#meaningBox{
+    display:inline-block;
+}
+
+#resultArea{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+}
+
+#meaningBox{
+    margin-top:20px;
+    font-size:24px;
+    color:red;
+}
+
+#rewardImage{
+    width:100px;
+    height:100px;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity 0.5s ease;
+}
+
+.showReward{
+    opacity:1;
+}
+
+
+   
+
+
+ 
+
+#resultArea{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+
+transform:translateX(60px);
+}
+
+
+
+.showReward{
+    opacity:1 !important;
+}
+
+</style>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCOyehx7qoaXwy2E7wyh0To1XcXP1NeewU",
+  authDomain: "studying-chinese.firebaseapp.com",
+  projectId: "studying-chinese",
+  storageBucket: "studying-chinese.firebasestorage.app",
+  messagingSenderId: "543213012724",
+  appId: "1:543213012724:web:2733ee9b19fb3ed49d80a1",
+  measurementId: "G-6KT4GXD8V0"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+window.db = db;
+</script>
+
+</head>
+<body>
+
+<h1>中国語単語勉強</h1>
+
+<h2>単語追加</h2>
+<select id="newCategory">
+    <option value="阅读">阅读</option>
+    <option value="hsk6">HSK6</option>
+    <option value="2">2</option>
+    <option value="chengyu">成語</option>
+</select>
+
+<input id="newHanzi" placeholder="漢字">
+<input id="newPinyin" placeholder="ピンイン">
+<input id="newMeaning" placeholder="意味">
+
+<button onclick="addWord()">追加</button>
+
+<h2>出題範囲</h2>
+
+<select id="gameCategory">
+    <option value="all">全部</option>
+    <option value="阅读">阅读</option>
+    <option value="hsk6">HSK6</option>
+    <option value="2">2</option>
+    <option value="chengyu">成語</option>
+</select>
+<hr>
+
+<div style="display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:15px;">
+
+
+
+    <div id="word"></div>
+
+</div>
+
+<input id="answer" placeholder="ピンインを入力">
+
+
+<div id="resultArea">
+
+    <div id="meaningBox"></div>
+
+<img id="rewardImage" src="seikai1.gif" >
+
+
+
+</div>
+
+<button id="restartButton"
+onclick="restartStudy()"
+style="display:none;">
+再開
+</button>
+
+<hr>
+
+<hr>
+
+
+
+
+<h2>登録単語一覧</h2>
+
+<div style="display:flex; gap:10px; justify-content:center;">
+
+    <button onclick="restartStudy()">
+    再開
+    </button>
+
+    <button onclick="clearAllChecks()">
+    ✅をすべて外す
+    </button>
+
+</div>
+</div>
+
+<div id="wordList"></div>
+
+
+
+<script>
+
+
+
+
+let words = JSON.parse(localStorage.getItem("words")) || [
+    {
+    
+    hanzi:"苹果",
+    pinyin:"píngguǒ",
+    answer:"pingguo",
+    meaning:"りんご",
+    category:"hsk1"
+}
+];
+
+words.forEach(word => {
+
+    if(word.checked === undefined){
+        word.checked = false;
+    }
+
+});
+
+
+let current;
+
+let remainingWords = [];
+let wrongWords = [];
+
+let lastWord = null;
+
+
+
+
+
+const rewards = [
+"seikai1.gif",
+"seikai2.gif",
+"seikai3.gif",
+"seikai4.jpeg",
+"seikai5.jpeg",
+"seikai8.gif",
+"seikai6.gif"
+];
+
+const batsuImages = [
+    "huseikai1.jpeg",
+    "huseikai2.jpeg",
+    "huseikai3.gif",
+      "huseikai4.gif",
+    "huseikai6.gif",
+      "huseikai5.gif"
+];
+
+
+function showWords(){
+
+    const wordList =
+        document.getElementById("wordList");
+
+    let html = "";
+
+    words.forEach((word,index) => {
+
+        html += `
+<div style="margin:10px;border:1px solid #ccc;padding:10px">
+
+
+<button onclick="toggleCheck(${index})">
+${word.checked ? "✅" : "⬜"}
+</button>
+
+${word.hanzi}
+/
+${word.pinyin}
+/
+${word.meaning}
+
+<button onclick="editWord(${index})">
+編集
+</button>
+
+<button onclick="deleteWord(${index})">
+削除
+</button>
+</div>
+`;
+    });
+
+    wordList.innerHTML = html;
+}
+
+
+
+function markRemembered(){
+
+    const index = words.findIndex(
+        word => word.hanzi === lastWord.hanzi
+    );
+
+    if(index !== -1){
+
+        words[index].checked = true;
+
+        localStorage.setItem(
+            "words",
+            JSON.stringify(words)
+        );
+
+        remainingWords = remainingWords.filter(
+            word => word.hanzi !== lastWord.hanzi
+        );
+
+        wrongWords = wrongWords.filter(
+            word => word.hanzi !== lastWord.hanzi
+        );
+
+        showWords();
+    }
+}
+
+function toggleCheck(index){
+
+    words[index].checked = !words[index].checked;
+
+    localStorage.setItem(
+        "words",
+        JSON.stringify(words)
+    );
+
+    showWords();
+}
+
+function deleteWord(index){
+
+    if(confirm("この単語を削除しますか？")){
+
+        words.splice(index, 1);
+
+        localStorage.setItem(
+            "words",
+            JSON.stringify(words)
+        );
+
+        showWords();
+    }
+}
+
+function convertPinyin(text){
+
+    return text
+        .replace(/ang1/g,"āng")
+        .replace(/ang2/g,"áng")
+        .replace(/ang3/g,"ǎng")
+        .replace(/ang4/g,"àng")
+
+        .replace(/eng1/g,"ēng")
+        .replace(/eng2/g,"éng")
+        .replace(/eng3/g,"ěng")
+        .replace(/eng4/g,"èng")
+
+        .replace(/ong1/g,"ōng")
+        .replace(/ong2/g,"óng")
+        .replace(/ong3/g,"ǒng")
+        .replace(/ong4/g,"òng")
+
+        .replace(/an1/g,"ān")
+        .replace(/an2/g,"án")
+        .replace(/an3/g,"ǎn")
+        .replace(/an4/g,"àn")
+
+        .replace(/en1/g,"ēn")
+        .replace(/en2/g,"én")
+        .replace(/en3/g,"ěn")
+        .replace(/en4/g,"èn")
+
+        .replace(/a1/g,"ā")
+        .replace(/a2/g,"á")
+        .replace(/a1/g,"ā")
+        .replace(/a2/g,"á")
+        .replace(/a3/g,"ǎ")
+        .replace(/a4/g,"à")
+
+        .replace(/e1/g,"ē")
+        .replace(/e2/g,"é")
+        .replace(/e3/g,"ě")
+        .replace(/e4/g,"è")
+
+        .replace(/i1/g,"ī")
+        .replace(/i2/g,"í")
+        .replace(/i3/g,"ǐ")
+        .replace(/i4/g,"ì")
+
+        .replace(/o1/g,"ō")
+        .replace(/o2/g,"ó")
+        .replace(/o3/g,"ǒ")
+        .replace(/o4/g,"ò")
+
+        .replace(/in1/g,"īn")
+        .replace(/in2/g,"ín")
+        .replace(/in3/g,"ǐn")
+        .replace(/in4/g,"ìn")
+
+        .replace(/u1/g,"ū")
+        .replace(/u2/g,"ú")
+        .replace(/u3/g,"ǔ")
+        .replace(/u4/g,"ù")
+
+.replace(/ian1/g,"iān")
+.replace(/ian2/g,"ián")
+.replace(/ian3/g,"iǎn")
+.replace(/ian4/g,"iàn")
+
+.replace(/uan1/g,"uān")
+.replace(/uan2/g,"uán")
+.replace(/uan3/g,"uǎn")
+.replace(/uan4/g,"uàn")
+
+.replace(/ui1/g,"uī")
+.replace(/ui2/g,"uí")
+.replace(/ui3/g,"uǐ")
+.replace(/ui4/g,"uì");
+
+}
+
+function removeTones(str){
+
+    return str
+        .replace(/ā|á|ǎ|à/g,"a")
+        .replace(/ē|é|ě|è/g,"e")
+        .replace(/ī|í|ǐ|ì/g,"i")
+        .replace(/ō|ó|ǒ|ò/g,"o")
+        .replace(/ū|ú|ǔ|ù/g,"u")
+        .replace(/ǖ|ǘ|ǚ|ǜ/g,"v")
+        .replace(/ü/g,"v");
+}
+
+const audioCtx = new AudioContext();
+
+function playCorrectSound(){
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.frequency.setValueAtTime(660, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioCtx.currentTime + 0.3
+    );
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+}
+
+
+
+function editWord(index) {
+    const newHanzi = prompt("漢字を編集", words[index].hanzi);
+    if (newHanzi === null) return;
+
+    const newPinyin = prompt("ピンインを編集", words[index].pinyin);
+    if (newPinyin === null) return;
+
+    const newMeaning = prompt("意味を編集", words[index].meaning);
+    if (newMeaning === null) return;
+
+    words[index].hanzi = newHanzi;
+    words[index].pinyin = convertPinyin(newPinyin);
+
+    words[index].answer =
+        newPinyin.replace(/[1-4]/g,"");
+
+    words[index].meaning = newMeaning;
+
+    localStorage.setItem(
+        "words",
+        JSON.stringify(words)
+    );
+
+    location.reload();
+}
+
+
+function playFart(){
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sawtooth";
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(
+        60,
+        audioCtx.currentTime + 0.25
+    );
+
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.25);
+}
+
+function nextWord(){
+
+    const selected =
+        document.getElementById("gameCategory").value;
+
+    let pool;
+
+    if(selected === "all"){
+        pool = words.filter(
+            word => !word.checked
+        );
+    }else{
+        pool = words.filter(
+            word =>
+                word.category === selected &&
+                !word.checked
+        );
+    }
+
+    if(pool.length === 0){
+
+    document.getElementById("word").textContent =
+        "Congratulations!!Complete";
+
+    document.getElementById("restartButton").style.display =
+        "inline-block";
+
+    return;
+}
+
+  if(remainingWords.length === 0){
+
+    if(wrongWords.length > 0){
+
+        remainingWords =
+            [...wrongWords]
+                .sort(() => Math.random() - 0.5);
+
+        wrongWords = [];
+
+  }else{
+
+    document.getElementById("word").textContent =
+        "Congratulation!!Complete";
+
+    document.getElementById("restartButton").style.display =
+        "inline-block";
+
+    return;
+}
+}
+
+    current = remainingWords.shift();
+
+    document.getElementById("word").textContent =
+        current.hanzi;
+
+
+}
+
+function clearAllChecks(){
+
+    if(!confirm("すべてのチェックを外しますか？")){
+        return;
+    }
+
+    words.forEach(word => {
+        word.checked = false;
+    });
+
+    localStorage.setItem(
+        "words",
+        JSON.stringify(words)
+    );
+
+    showWords();
+
+    alert("すべてのチェックを外しました");
+}
+
+
+function restartStudy(){
+
+    remainingWords =
+        words
+        .filter(word => !word.checked)
+        .sort(() => Math.random() - 0.5);
+
+    wrongWords = [];
+
+    document.getElementById("restartButton").style.display =
+        "none";
+
+    nextWord();
+}
+function addWord(){
+
+    const hanzi =
+        document.getElementById("newHanzi").value;
+
+    const rawPinyin =
+    document.getElementById("newPinyin").value;
+
+const pinyin =
+    convertPinyin(rawPinyin);
+
+    const meaning =
+        document.getElementById("newMeaning").value;
+    const category =
+    document.getElementById("newCategory").value;
+
+const exists = words.some(
+    word => word.hanzi === hanzi
+);
+
+if(exists){
+
+    alert("この単語はすでに登録されています");
+
+    return;
+}
+
+    if(hanzi && pinyin){
+
+        words.push({
+    hanzi:hanzi,
+    pinyin:pinyin,
+    answer:rawPinyin
+    .replace(/[1-4]/g,"")
+    .replace(/ü/g,"v")
+    .toLowerCase()
+    .trim(),
+    meaning:meaning,
+    category:category,
+    checked:false
+});
+
+        localStorage.setItem(
+            "words",
+            JSON.stringify(words)
+        );
+
+        alert("追加しました");
+        showWords();
+        
+        document.getElementById("newHanzi").value="";
+        document.getElementById("newPinyin").value="";
+        document.getElementById("newMeaning").value="";
+    }
+}
+
+document.getElementById("answer")
+.addEventListener("keydown", function(event){
+
+    if(event.key === "Enter"){
+
+        const answer = this.value.trim();
+
+        const wordBox =
+            document.getElementById("word");
+
+
+
+
+const input = removeTones(answer)
+    .trim()
+    .toLowerCase()
+    .replace(/ü/g,"v");
+
+const correct = removeTones(current.answer)
+    .trim()
+    .toLowerCase()
+    .replace(/ü/g,"v");
+
+if(input === correct){
+
+
+
+
+
+            const rewardImage =
+    document.getElementById("rewardImage");
+
+;
+
+rewardImage.src =
+    rewards[Math.floor(Math.random() * rewards.length)];
+
+rewardImage.classList.add("showReward");
+
+setTimeout(() => {
+    rewardImage.classList.remove("showReward");
+   
+},1500);
+
+            playCorrectSound();
+
+            wordBox.classList.add("pop");
+
+            setTimeout(() => {
+                wordBox.classList.remove("pop");
+            }, 200);
+
+lastWord = current;
+
+
+
+            document.getElementById("meaningBox").innerHTML =
+
+ 
+
+                          "<span style='color:limegreen'>" +
+                "✅正确<br>" +
+                "ピンイン: " + current.pinyin + "<br>" +
+                current.meaning　+
+    "</span><br><br>" +
+    "<label style='color:limegreen;font-size:70%;'>" +
+    "<input type='checkbox' onchange='markRemembered()'>覚えた" +
+    "</label>";
+
+            this.value = "";
+
+            setTimeout(() => {
+                nextWord();
+            }, 1500);
+
+        }else{
+
+
+
+    const rewardImage =
+        document.getElementById("rewardImage");
+
+rewardImage.src =
+    batsuImages[Math.floor(Math.random() * batsuImages.length)];
+
+rewardImage.style.transform = "scale(1)";
+
+rewardImage.classList.add("showReward");
+
+setTimeout(() => {
+    rewardImage.style.transform = "scale(1.3)";
+},30);
+
+    setTimeout(() => {
+    rewardImage.classList.remove("showReward");
+    rewardImage.style.transform = "scale(1)";
+},1500);
+
+playFart();
+    wordBox.classList.add("shake");
+
+    setTimeout(() => {
+        wordBox.classList.remove("shake");
+    }, 400);
+ wrongWords.push(current);
+
+    document.getElementById("meaningBox").innerHTML =
+        "×错误<br>" +
+        "正解: " + current.pinyin + "<br>" +
+        current.meaning;
+ 
+
+            this.value = "";
+
+            setTimeout(() => {
+                nextWord();
+            }, 2000);
+        }
+    }
+});
+
+remainingWords =
+    words
+        .filter(word => !word.checked)
+        .sort(() => Math.random() - 0.5);
+
+nextWord();
+showWords();
+
+</script>
+
+
+
+<hr>
+
+
+</body>
+</html>
+
