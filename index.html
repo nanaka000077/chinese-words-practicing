@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
+
+
+
+</script>
+
 <head>
 <meta charset="UTF-8">
 <title>HSK Dash</title>
@@ -150,10 +155,33 @@ transform:translateX(60px);
 
 </style>
 
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCOyehx7qoaXwy2E7wyh0To1XcXP1NeewU",
+  authDomain: "studying-chinese.firebaseapp.com",
+  projectId: "studying-chinese",
+  storageBucket: "studying-chinese.firebasestorage.app",
+  messagingSenderId: "543213012724",
+  appId: "1:543213012724:web:2733ee9b19fb3ed49d80a1",
+  measurementId: "G-6KT4GXD8V0"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+window.db = db;
+</script>
+
 </head>
 <body>
 
-<h1>ななか単語勉強</h1>
+<h1>中国語単語勉強</h1>
 
 <h2>単語追加</h2>
 <select id="newCategory">
@@ -838,3 +866,4 @@ showWords();
 
 </body>
 </html>
+
