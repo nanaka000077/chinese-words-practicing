@@ -1,0 +1,22 @@
+<button onclick="playFart()">💨プスッ</button>
+function playFart(){
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sawtooth";
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(
+        60,
+        audioCtx.currentTime + 0.25
+    );
+
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.25);
+}
